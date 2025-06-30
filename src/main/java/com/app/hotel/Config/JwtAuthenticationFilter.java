@@ -1,6 +1,7 @@
 package com.app.hotel.Config;
 
 import com.app.hotel.Service.UserDetailsServiceImpl;
+import com.app.hotel.Service.GuestDetailsService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    @Autowired
+    private GuestDetailsService guestDetailsService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -39,7 +43,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         username = jwtUtils.extractUsername(jwt);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails;
+            if (username.contains("@")) {
+                userDetails = guestDetailsService.loadUserByUsername(username);
+            } else {
+                userDetails = userDetailsService.loadUserByUsername(username);
+            }
             if (jwtUtils.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

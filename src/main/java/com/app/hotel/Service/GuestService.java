@@ -30,6 +30,9 @@ public class GuestService {
     private PaymentRepository paymentRepository;
 
     public Guest createGuest(Guest guest){
+        if (guestRepository.existsByEmail(guest.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
         return guestRepository.save(guest);
     }
 

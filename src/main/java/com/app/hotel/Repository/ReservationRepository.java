@@ -2,6 +2,8 @@ package com.app.hotel.Repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,4 +30,14 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByRoom(Room room);
     
+    @Query("SELECT r FROM Reservation r " +
+           "WHERE (:guestName IS NULL OR LOWER(r.guest.name) LIKE LOWER(CONCAT('%', :guestName, '%'))) " +
+           "AND (:roomType IS NULL OR LOWER(r.room.type) LIKE LOWER(CONCAT('%', :roomType, '%'))) " +
+           "AND (:status IS NULL OR r.status = :status)")
+    Page<Reservation> findWithFilters(
+        @Param("guestName") String guestName,
+        @Param("roomType") String roomType,
+        @Param("status") String status,
+        Pageable pageable
+    );
 }

@@ -4,6 +4,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.hotel.Entity.Reservation;
 import com.app.hotel.Service.ReservationService;
+import com.app.hotel.Repository.ReservationRepository;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -25,6 +29,12 @@ public class ReservationController {
     
     @Autowired
     private ReservationService reservationService;
+
+    private final ReservationRepository reservationRepository;
+
+    public ReservationController(ReservationRepository reservationRepository) {
+        this.reservationRepository = reservationRepository;
+    }
 
     @PostMapping
     public ResponseEntity<Reservation> create(@RequestBody Reservation reservation){
@@ -53,12 +63,22 @@ public class ReservationController {
     }
     
     @GetMapping("/paged")
-    public Page<Reservation> getPagination(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "5") int size,
-        @RequestParam(defaultValue = "checkInDate") String sortBy,
-        @RequestParam(defaultValue = "asc") String sortDir){
-            return reservationService.getReservationsWithPagination(page, size, sortBy, sortDir);
+    public Page<Reservation> getReservationsPaged(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sortBy,
+            @RequestParam String sortDir,
+            @RequestParam(required = false) String guestName,
+            @RequestParam(required = false) String roomType,
+            @RequestParam(required = false) String status
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        return reservationRepository.findWithFilters(guestName, roomType, status, pageable);
+    }
+
+    @GetMapping("/guest/{guestId}")
+    public List<Reservation> getByGuest(@PathVariable Long guestId) {
+        return reservationService.getReservationsByGuestId(guestId);
     }
 
 }

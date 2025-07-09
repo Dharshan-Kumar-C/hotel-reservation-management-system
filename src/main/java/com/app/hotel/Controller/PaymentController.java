@@ -4,6 +4,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.hotel.Entity.Payment;
 import com.app.hotel.Service.PaymentService;
+import com.app.hotel.Repository.PaymentRepository;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -25,6 +29,12 @@ public class PaymentController {
     
     @Autowired
     private PaymentService paymentService;
+
+    private final PaymentRepository paymentRepository;
+
+    public PaymentController(PaymentRepository paymentRepository) {
+        this.paymentRepository = paymentRepository;
+    }
 
     @PostMapping
     public ResponseEntity<Payment> create(@RequestBody Payment payment){
@@ -53,12 +63,24 @@ public class PaymentController {
     }
 
     @GetMapping("/paged")
-    public Page<Payment> getPagination(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "5") int size,
-        @RequestParam(defaultValue = "amountPaid") String sortBy,
-        @RequestParam(defaultValue = "asc") String sortDir){
-            return paymentService.getPaymentsWithPagination(page, size, sortBy, sortDir);
+    public Page<Payment> getPaymentsPaged(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sortBy,
+            @RequestParam String sortDir,
+            @RequestParam(required = false) String reservationId
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        if (reservationId != null && !reservationId.isEmpty()) {
+            return paymentRepository.findByReservationIdLike(reservationId, pageable);
+        } else {
+            return paymentRepository.findAll(pageable);
+        }
+    }
+
+    @GetMapping("/guest/{guestId}")
+    public List<Payment> getByGuest(@PathVariable Long guestId) {
+        return paymentService.getPaymentsByGuestId(guestId);
     }
 
 }

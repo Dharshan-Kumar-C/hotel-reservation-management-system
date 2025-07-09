@@ -5,6 +5,9 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -49,6 +52,16 @@ public class GuestController {
         return ResponseEntity.ok(guestService.getGuest(id));
     }
 
+    @GetMapping("/profile/{email}")
+    public ResponseEntity<Guest> getByEmail(@PathVariable String email){
+        Optional<Guest> guest = guestRepository.findByEmail(email);
+        if (guest.isPresent()) {
+            return ResponseEntity.ok(guest.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping
     public List<Guest> getAll(){
         return guestService.getAllGuests();
@@ -66,12 +79,19 @@ public class GuestController {
     }
 
     @GetMapping("/paged")
-    public Page<Guest> getPagination(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "5") int size,
-        @RequestParam(defaultValue = "name") String sortBy,
-        @RequestParam(defaultValue = "asc") String sortDir){
-            return guestService.getGuestsWithPagination(page, size, sortBy, sortDir);
+    public Page<Guest> getGuestsPaged(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sortBy,
+            @RequestParam String sortDir,
+            @RequestParam(required = false) String search
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        if (search != null && !search.isEmpty()) {
+            return guestRepository.findByNameContainingIgnoreCase(search, pageable);
+        } else {
+            return guestRepository.findAll(pageable);
+        }
     }
 
     @PostMapping("/register")

@@ -14,6 +14,8 @@ import com.app.hotel.Entity.Reservation;
 import com.app.hotel.Exception.ResourceNotFoundException;
 import com.app.hotel.Repository.PaymentRepository;
 import com.app.hotel.Repository.ReservationRepository;
+import com.app.hotel.Repository.GuestRepository;
+import com.app.hotel.Entity.Guest;
 
 @Service
 public class ReservationService {
@@ -23,6 +25,9 @@ public class ReservationService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private GuestRepository guestRepository;
 
     public Reservation createReservation(Reservation reservation){
         return reservationRepository.save(reservation);
@@ -58,6 +63,12 @@ public class ReservationService {
         Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
         return reservationRepository.findAll(pageable);
+    }
+
+    public List<Reservation> getReservationsByGuestId(Long guestId) {
+        Guest guest = guestRepository.findById(guestId)
+            .orElseThrow(() -> new ResourceNotFoundException("Guest not found with id: " + guestId));
+        return reservationRepository.findByGuest(guest);
     }
     
 }

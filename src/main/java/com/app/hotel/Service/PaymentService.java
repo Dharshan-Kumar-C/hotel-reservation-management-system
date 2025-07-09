@@ -53,5 +53,9 @@ public class PaymentService {
         Pageable pageable = PageRequest.of(page, size, sort);
         return paymentRepository.findAll(pageable);
     }
+
+    public List<Payment> getPaymentsByGuestId(Long guestId) {
+        return paymentRepository.findByGuestId(guestId);
+    }
     
 }

@@ -4,6 +4,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.hotel.Entity.Room;
 import com.app.hotel.Service.RoomService;
+import com.app.hotel.Repository.RoomRepository;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -25,6 +29,12 @@ public class RoomController {
     
     @Autowired
     private RoomService roomService;
+
+    private final RoomRepository roomRepository;
+
+    public RoomController(RoomRepository roomRepository) {
+        this.roomRepository = roomRepository;
+    }
 
     @PostMapping
     public ResponseEntity<Room> create(@RequestBody Room room){
@@ -53,12 +63,29 @@ public class RoomController {
     }
 
     @GetMapping("/paged")
-    public Page<Room> getPagination(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "5") int size,
-        @RequestParam(defaultValue = "amount") String sortBy,
-        @RequestParam(defaultValue = "asc") String sortDir){
-            return roomService.getRoomsWithPagination(page, size, sortBy, sortDir);
+    public Page<Room> getRoomsPaged(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sortBy,
+            @RequestParam String sortDir,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        if (type != null && !type.isEmpty() && status != null && !status.isEmpty()) {
+            return roomRepository.findByTypeAndStatus(type, status, pageable);
+        } else if (type != null && !type.isEmpty()) {
+            return roomRepository.findByType(type, pageable);
+        } else if (status != null && !status.isEmpty()) {
+            return roomRepository.findByStatus(status, pageable);
+        } else {
+            return roomRepository.findAll(pageable);
+        }
+    }
+
+    @GetMapping("/type/{type}")
+    public ResponseEntity<List<Room>> getRoomsByType(@PathVariable String type){
+        return ResponseEntity.ok(roomService.getRoomsByType(type));
     }
 
 }

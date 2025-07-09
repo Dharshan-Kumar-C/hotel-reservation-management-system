@@ -50,6 +50,7 @@ public class GuestService {
         existing.setEmail(updatedGuest.getEmail());
         existing.setPhone(updatedGuest.getPhone());
         existing.setAddress(updatedGuest.getAddress());
+        existing.setPassword(updatedGuest.getPassword());
         return guestRepository.save(existing);
     }
 

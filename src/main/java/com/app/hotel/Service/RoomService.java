@@ -66,5 +66,9 @@ public class RoomService {
         Pageable pageable = PageRequest.of(page, size, sort);
         return roomRepository.findAll(pageable);
     }
+
+    public List<Room> getRoomsByType(String type){
+        return roomRepository.findByType(type);
+    }
     
 }
